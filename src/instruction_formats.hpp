@@ -6,6 +6,8 @@
 
 namespace mercury {
 
+using RawInstruction = std::uint32_t;
+
 enum class Opcode: std::uint8_t {
     RInst = 0x00,
     ANDI = 0x0c,

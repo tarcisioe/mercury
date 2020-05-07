@@ -1,10 +1,12 @@
-add_executable(main)
+add_executable(mercury)
 
 target_sources(
-    main
+    mercury
         PRIVATE
             bitwise.cpp
             bitwise.hpp
+            cpu.cpp
+            cpu.hpp
             decoder.cpp
             decoder.hpp
             instruction_formats.cpp
@@ -15,7 +17,7 @@ target_sources(
 )
 
 target_link_libraries(
-    main
+    mercury
         PRIVATE
             project_options
 )

@@ -68,8 +68,6 @@ constexpr auto address = FieldInfo{mask::address, position::address};
 
 }
 
-using RawInstruction = std::uint32_t;
-
 template <typename T = std::uint32_t>
 constexpr auto get_field(RawInstruction raw, FieldInfo info)
 {
