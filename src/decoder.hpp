@@ -147,6 +147,8 @@ constexpr std::optional<Instruction> decode(RawInstruction raw)
         case Opcode::JAL: {
             return j_instruction(opcode, raw);
         }
+        case Opcode::ADDI:
+        case Opcode::ADDIU:
         case Opcode::BEQ:
         case Opcode::BNE:
         case Opcode::SLTI:

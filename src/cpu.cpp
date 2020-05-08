@@ -21,14 +21,39 @@ using IInstructionHandlers =
 using JInstructionHandlers =
     EnumIndexedArray<Opcode, JInstructionHandler, Opcode::JAL>;
 
-auto as_signed(std::uint32_t u)
+constexpr auto as_signed(std::uint32_t u)
 {
     return static_cast<std::int32_t>(u);
 }
 
-auto as_unsigned(std::int32_t s)
+constexpr auto as_unsigned(std::int32_t s)
 {
     return static_cast<std::uint32_t>(s);
+}
+
+constexpr auto as_signed(std::uint16_t u)
+{
+    return static_cast<std::int16_t>(u);
+}
+
+constexpr auto as_unsigned(std::int16_t s)
+{
+    return static_cast<std::uint16_t>(s);
+}
+
+constexpr auto zero_extend(std::uint16_t u)
+{
+    return static_cast<std::uint32_t>(u);
+}
+
+constexpr auto sign_extend(std::int16_t u)
+{
+    return static_cast<std::int32_t>(u);
+}
+
+constexpr auto sign_extend(std::uint16_t u)
+{
+    return sign_extend(as_signed(u));
 }
 
 struct CPUInternals {
@@ -194,11 +219,64 @@ struct CPUInternals {
 
     /* I instructions */
 
+    void addi(IInstruction instruction)
+    {
+        auto rs = as_signed(register_bank[instruction.rs]);
+
+        register_bank[instruction.rt] =
+            as_unsigned(rs + sign_extend(instruction.immediate));
+    }
+
+    void addiu(IInstruction instruction)
+    {
+        auto rs = register_bank[instruction.rs];
+
+        register_bank[instruction.rt] =
+            rs + as_unsigned(sign_extend(instruction.immediate));
+    }
+
+    void andi(IInstruction instruction)
+    {
+        auto rs = register_bank[instruction.rs];
+
+        register_bank[instruction.rt] = rs & zero_extend(instruction.immediate);
+    }
+
     void beq(IInstruction instruction)
     {
         std::cout << "beq " << static_cast<unsigned>(instruction.rt) << ' '
                   << static_cast<unsigned>(instruction.rs) << ' '
                   << instruction.immediate << "\n";
+    }
+
+    void bne(IInstruction instruction)
+    {
+        std::cout << "bne " << static_cast<unsigned>(instruction.rt) << ' '
+                  << static_cast<unsigned>(instruction.rs) << ' '
+                  << instruction.immediate << "\n";
+    }
+
+    void ori(IInstruction instruction)
+    {
+        auto rs = register_bank[instruction.rs];
+
+        register_bank[instruction.rt] = rs | zero_extend(instruction.immediate);
+    }
+
+    void slti(IInstruction instruction)
+    {
+        auto rs = register_bank[instruction.rs];
+
+        register_bank[instruction.rt] =
+            as_signed(rs) < sign_extend(instruction.immediate);
+    }
+
+    void sltiu(IInstruction instruction)
+    {
+        auto rs = register_bank[instruction.rs];
+
+        register_bank[instruction.rt] =
+            rs < as_unsigned(sign_extend(instruction.immediate));
     }
 
     void jump(JInstruction instruction)
@@ -245,7 +323,14 @@ constexpr static IInstructionHandlers make_i_handlers()
 {
     auto handlers = IInstructionHandlers{&CPUInternals::unknown_i_instruction};
 
+    handlers[Opcode::ADDI] = &CPUInternals::addi;
+    handlers[Opcode::ADDIU] = &CPUInternals::addiu;
+    handlers[Opcode::ANDI] = &CPUInternals::andi;
     handlers[Opcode::BEQ] = &CPUInternals::beq;
+    handlers[Opcode::BNE] = &CPUInternals::bne;
+    handlers[Opcode::ORI] = &CPUInternals::ori;
+    handlers[Opcode::SLTI] = &CPUInternals::slti;
+    handlers[Opcode::SLTIU] = &CPUInternals::sltiu;
 
     return handlers;
 }

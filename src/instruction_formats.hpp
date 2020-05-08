@@ -14,6 +14,8 @@ enum class Opcode: std::uint8_t {
     JAL = 0x03,
     BEQ = 0x04,
     BNE = 0x05,
+    ADDI = 0x08,
+    ADDIU = 0x09,
     SLTI = 0x0a,
     SLTIU = 0x0b,
     ORI = 0x0d,
