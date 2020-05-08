@@ -12,18 +12,24 @@ namespace mercury {
 
 struct CPUInternals;
 
+using Register = std::uint32_t;
+using Registers = std::array<Register, 32>;
+
 class CPU {
 public:
-    void execute(RawInstruction instruction);
-
-    CPU();
+    CPU(RawInstruction const* program);
     ~CPU();
+
+    Registers const& registers() const;
+    Register pc() const;
+    void execute_instruction();
 
 private:
     void execute(RInstruction);
     void execute(IInstruction);
     void execute(JInstruction);
 
+    RawInstruction const* program_;
     std::unique_ptr<CPUInternals> impl;
 };
 

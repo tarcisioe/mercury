@@ -1,12 +1,28 @@
+#include <iostream>
+#include <vector>
+
 #include "cpu.hpp"
 
 int main()
 {
-    auto cpu = mercury::CPU{};
+    auto const instructions = std::vector<mercury::RawInstruction>{
+        0b001010'01000'01001'0000000000001010,  // slti $t1 $t0 10
+        0b000100'00000'01001'0000000000000001,  // beq $t1 $zero
+        0b001000'01000'01000'0000000000000001,  // addi $t0 1
+        0b000010'00000000000000000000000000,    // j 0
+    };
 
-    cpu.execute(0x00000000);
-    cpu.execute(0x08000000);
-    cpu.execute(0x10000000);
-    cpu.execute(0x000000FF);
-    cpu.execute(0xFF0000FF);
+    auto cpu = mercury::CPU{instructions.data()};
+
+    while (cpu.pc()/4 < instructions.size()) {
+        cpu.execute_instruction();
+    }
+
+    {
+        auto count = 0;
+        for (auto& r: cpu.registers()) {
+            std::cout << "R" << count << ": " << r << '\n';
+            ++count;
+        }
+    }
 }

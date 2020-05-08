@@ -8,8 +8,6 @@
 
 namespace mercury {
 
-using Register = std::uint32_t;
-
 using RInstructionHandler = void (CPUInternals::*)(RInstruction);
 using IInstructionHandler = void (CPUInternals::*)(IInstruction);
 using JInstructionHandler = void (CPUInternals::*)(JInstruction);
@@ -57,6 +55,13 @@ constexpr auto sign_extend(std::uint16_t u)
 }
 
 struct CPUInternals {
+    CPUInternals(): register_bank{}
+    {
+        for (auto&& r: register_bank) {
+            r = 0u;
+        }
+    }
+
     void unknown_r_instruction(RInstruction)
     {
         std::cout << "unknown_r_instruction\n";
@@ -242,18 +247,31 @@ struct CPUInternals {
         register_bank[instruction.rt] = rs & zero_extend(instruction.immediate);
     }
 
+    void branch(std::uint16_t immediate)
+    {
+        auto address_delta = sign_extend(immediate) << 2;
+
+        pc += as_unsigned(4 + address_delta);
+    }
+
     void beq(IInstruction instruction)
     {
-        std::cout << "beq " << static_cast<unsigned>(instruction.rt) << ' '
-                  << static_cast<unsigned>(instruction.rs) << ' '
-                  << instruction.immediate << "\n";
+        auto rs = register_bank[instruction.rs];
+        auto rt = register_bank[instruction.rt];
+
+        if (rs == rt) {
+            branch(instruction.immediate);
+        }
     }
 
     void bne(IInstruction instruction)
     {
-        std::cout << "bne " << static_cast<unsigned>(instruction.rt) << ' '
-                  << static_cast<unsigned>(instruction.rs) << ' '
-                  << instruction.immediate << "\n";
+        auto rs = register_bank[instruction.rs];
+        auto rt = register_bank[instruction.rt];
+
+        if (rs != rt) {
+            branch(instruction.immediate);
+        }
     }
 
     void ori(IInstruction instruction)
@@ -279,18 +297,26 @@ struct CPUInternals {
             rs < as_unsigned(sign_extend(instruction.immediate));
     }
 
+    Register jump_address(std::uint32_t address_field)
+    {
+        auto page_base = (pc + 4) & bitwise::and_mask(4, 28);
+        return page_base | (address_field << 2);
+    }
+
     void jump(JInstruction instruction)
     {
-        std::cout << "jump " << instruction.address << "\n";
+        pc = jump_address(instruction.address);
     }
 
     void jal(JInstruction instruction)
     {
-        std::cout << "jal " << instruction.address << "\n";
+        register_bank[31] = pc + 8;
+        jump(instruction);
     }
 
-    std::array<Register, 32> register_bank;
-    Register hi, lo;
+    Registers register_bank;
+    Register hi{0}, lo{0};
+    Register pc{0};
 };
 
 constexpr static RInstructionHandlers make_r_handlers()
@@ -349,6 +375,22 @@ constexpr auto r_handlers = make_r_handlers();
 constexpr auto i_handlers = make_i_handlers();
 constexpr auto j_handlers = make_j_handlers();
 
+CPU::CPU(RawInstruction const* program):
+    program_{program}, impl{std::make_unique<CPUInternals>()}
+{}
+
+CPU::~CPU() = default;
+
+Registers const& CPU::registers() const
+{
+    return impl->register_bank;
+}
+
+Register CPU::pc() const
+{
+    return impl->pc;
+}
+
 void CPU::execute(RInstruction instruction)
 {
     auto&& handler = r_handlers[instruction.funct];
@@ -370,19 +412,17 @@ void CPU::execute(JInstruction instruction)
     (*impl.*handler)(instruction);
 }
 
-CPU::CPU(): impl{std::make_unique<CPUInternals>()} {}
-
-CPU::~CPU() = default;
-
 template <class... Ts> struct overload: Ts... {
     using Ts::operator()...;
 };
 
 template <class... Ts> overload(Ts...) -> overload<Ts...>;
 
-void CPU::execute(RawInstruction raw_instruction)
+void CPU::execute_instruction()
 {
-    auto const decoded = decode(raw_instruction);
+    auto const decoded = decode(program_[impl->pc / 4]);
+
+    impl->pc += 4;
 
     if (not decoded) {
         std::cout << "Unknown instruction.\n";
