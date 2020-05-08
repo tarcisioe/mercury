@@ -84,7 +84,13 @@ constexpr std::optional<RInstruction> r_instruction(RawInstruction raw)
         case Funct::ADD:
         case Funct::ADDU:
         case Funct::AND:
+        case Funct::DIV:
+        case Funct::DIVU:
         case Funct::JR:
+        case Funct::MFHI:
+        case Funct::MFLO:
+        case Funct::MULT:
+        case Funct::MULTU:
         case Funct::NOR:
         case Funct::OR:
         case Funct::SLT:
