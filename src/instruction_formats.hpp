@@ -23,7 +23,7 @@ enum class Opcode: std::uint8_t {
     ORI = 0x0d,
     SLTI = 0x0a,
     SLTIU = 0x0b,
-    SB = 0x028,
+    SB = 0x28,
     SC = 0x38,
     SH = 0x29,
     SW = 0x2b,
@@ -69,9 +69,9 @@ struct IInstruction {
 
 constexpr bool operator==(IInstruction lhs, IInstruction rhs)
 {
-    return (lhs.opcode == rhs.opcode) and (lhs.rs == rhs.rs) and (lhs.rt == rhs.rt) and (lhs.immediate == rhs.immediate);
+    return (lhs.opcode == rhs.opcode) and (lhs.rs == rhs.rs) and
+           (lhs.rt == rhs.rt) and (lhs.immediate == rhs.immediate);
 }
-
 
 struct JInstruction {
     // Opcode must be validated before construction.
@@ -83,7 +83,6 @@ constexpr bool operator==(JInstruction lhs, JInstruction rhs)
 {
     return (lhs.opcode == rhs.opcode) and (lhs.address == rhs.address);
 }
-
 
 using Instruction = std::variant<RInstruction, IInstruction, JInstruction>;
 

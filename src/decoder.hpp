@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
+#include <iostream>
 
 #include "bitwise.hpp"
+#include "enum_tools.hpp"
 #include "instruction_formats.hpp"
 
 namespace mercury {
@@ -74,15 +76,34 @@ constexpr auto get_field(RawInstruction raw, FieldInfo info)
     return static_cast<T>((raw & info.mask) >> info.position);
 }
 
-constexpr auto r_instruction(RawInstruction raw)
+constexpr std::optional<RInstruction> r_instruction(RawInstruction raw)
 {
-    return RInstruction{
-        get_field<std::uint8_t>(raw, info::rs),
-        get_field<std::uint8_t>(raw, info::rt),
-        get_field<std::uint8_t>(raw, info::rd),
-        get_field<std::uint8_t>(raw, info::shamt),
-        get_field<Funct>(raw, info::funct),
-    };
+    auto funct = get_field<Funct>(raw, info::funct);
+
+    switch (funct) {
+        case Funct::ADD:
+        case Funct::ADDU:
+        case Funct::AND:
+        case Funct::JR:
+        case Funct::NOR:
+        case Funct::OR:
+        case Funct::SLT:
+        case Funct::SLTU:
+        case Funct::SLL:
+        case Funct::SRL:
+        case Funct::SUB:
+        case Funct::SUBU: {
+            return RInstruction{
+                get_field<std::uint8_t>(raw, info::rs),
+                get_field<std::uint8_t>(raw, info::rt),
+                get_field<std::uint8_t>(raw, info::rd),
+                get_field<std::uint8_t>(raw, info::shamt),
+                get_field<Funct>(raw, info::funct),
+            };
+        }
+    }
+
+    return std::nullopt;
 }
 
 constexpr auto j_instruction(Opcode opcode, RawInstruction raw)
@@ -103,19 +124,18 @@ constexpr auto i_instruction(Opcode opcode, RawInstruction raw)
     };
 }
 
-template <typename Enum>
-constexpr std::underlying_type_t<Enum> value_of(Enum value)
-{
-    return static_cast<std::underlying_type_t<Enum>>(value);
-}
-
 constexpr std::optional<Instruction> decode(RawInstruction raw)
 {
     auto opcode = get_field<Opcode>(raw, info::opcode);
 
     switch (opcode) {
         case Opcode::RInst: {
-            return r_instruction(raw);
+            auto decoded = r_instruction(raw);
+            if (not decoded) {
+                return std::nullopt;
+            }
+
+            return *decoded;
         }
         case Opcode::J:
         case Opcode::JAL: {

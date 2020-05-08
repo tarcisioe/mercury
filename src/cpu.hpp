@@ -2,21 +2,29 @@
 #define MERCURY_CPU_HPP
 
 #include <array>
+#include <memory>
 
 #include "instruction_formats.hpp"
+#include "enum_tools.hpp"
 
 
 namespace mercury {
 
-using Register = std::uint32_t;
+struct CPUInternals;
 
 class CPU {
 public:
-    void execute(RawInstruction r);
+    void execute(RawInstruction instruction);
+
+    CPU();
+    ~CPU();
 
 private:
+    void execute(RInstruction);
+    void execute(IInstruction);
+    void execute(JInstruction);
 
-    // std::array<Register, 32> register_bank;
+    std::unique_ptr<CPUInternals> impl;
 };
 
 }

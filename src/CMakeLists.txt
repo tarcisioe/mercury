@@ -9,6 +9,10 @@ target_sources(
             cpu.hpp
             decoder.cpp
             decoder.hpp
+            enum_indexed_array.hpp
+            enum_indexed_array.cpp
+            enum_tools.hpp
+            enum_tools.cpp
             instruction_formats.cpp
             instruction_formats.hpp
             sized_literals.cpp
