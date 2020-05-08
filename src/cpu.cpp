@@ -105,7 +105,7 @@ struct CPUInternals {
 
     void jr(RInstruction instruction)
     {
-        std::cout << "jr " << register_bank[instruction.rs] << "\n";
+        pc = register_bank[instruction.rs];
     }
 
     void nor(RInstruction instruction)
